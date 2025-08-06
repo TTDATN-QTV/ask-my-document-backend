@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+*.sqlite3
+
+# VSCode
+.vscode/
+
+# Streamlit cache
+.streamlit/
+s
