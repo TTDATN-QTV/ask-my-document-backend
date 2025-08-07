@@ -3,6 +3,6 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/")
-def dummy_upload():
-    return {"msg": "Upload route placeholder"}
+@router.post("/")
+async def upload_document():
+    return {"message": "Upload endpoint working!"}

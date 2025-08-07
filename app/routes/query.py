@@ -3,6 +3,6 @@ from fastapi import APIRouter
 
 router = APIRouter()
 
-@router.get("/")
-def dummy_query():
-    return {"msg": "Query route placeholder"}
+@router.post("/")
+async def query_document():
+    return {"message": "Query endpoint working!"}
