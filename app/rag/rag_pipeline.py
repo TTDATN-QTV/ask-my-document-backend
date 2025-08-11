@@ -28,3 +28,10 @@ class RAGPipeline:
         # 3. Call LLM
         answer = self.llm_client.generate(prompt)
         return answer
+
+def generate_answer(query: str, index_path: str, metadata_path: str, llm_client, top_k: int = 5) -> str:
+    """
+    Utility function to create RAGPipeline and generate an answer.
+    """
+    pipeline = RAGPipeline(index_path, metadata_path, llm_client)
+    return pipeline.run(query, top_k=top_k)

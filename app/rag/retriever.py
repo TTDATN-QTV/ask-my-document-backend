@@ -30,3 +30,10 @@ class FaissRetriever:
             if idx != -1:  # No match found
                 results.append(self.metadata[idx])
         return results
+
+INDEX_PATH = "data/index/mock_index.faiss"
+META_PATH = "data/index/mock_index.pkl"
+
+def get_relevant_context(query: str, top_k: int = 5):
+    retriever = FaissRetriever(INDEX_PATH, META_PATH)
+    return retriever.retrieve(query, top_k)
