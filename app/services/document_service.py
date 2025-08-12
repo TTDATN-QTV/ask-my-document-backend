@@ -1,24 +1,46 @@
-import os
-import uuid
+# app/services/document_service.py
 from pathlib import Path
+from fastapi import UploadFile
 
-from app.utils.pdf_parser import extract_text_from_pdf
+from app.config import UPLOAD_DIR, INDEX_DIR
+from app.utils.pdf_parser import extract_text
 from app.rag.retriever import build_faiss_index
 
-UPLOAD_DIR = Path("data/uploads")
-INDEX_DIR = Path("data/index")
 
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-INDEX_DIR.mkdir(parents=True, exist_ok=True)
-
-def save_uploaded_file(file) -> Path:
-    file_id = str(uuid.uuid4())
-    file_path = UPLOAD_DIR / f"{file_id}.pdf"
+def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
+    """
+    Save the uploaded file to the given upload_dir with original filename.
+    Automatically uses separate folders for prod/test depending on APP_ENV.
+    """
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    file_path = upload_dir / file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
     return file_path
 
+
+def split_text_to_docs(text: str, chunk_size: int = 500) -> list[str]:
+    """
+    Split text into smaller chunks (docs) of max length chunk_size.
+    """
+    return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
+
+
+def create_faiss_index_and_save(docs: list[str], index_path: Path, metadata_path: Path):
+    """
+    Build FAISS index from docs and save both index and metadata to disk.
+    """
+    build_faiss_index(docs, index_path, metadata_path)
+
+
 def process_and_index_document(file_path: Path):
-    text = extract_text_from_pdf(file_path)
-    chunks = [text[i:i+500] for i in range(0, len(text), 500)]
-    build_faiss_index(chunks, INDEX_DIR / f"{file_path.stem}.index")
+    """
+    Extract text from PDF, split into chunks, and build FAISS index.
+    Saves index/metadata into environment-specific INDEX_DIR.
+    """
+    text = extract_text(file_path)
+    chunks = split_text_to_docs(text)
+    index_path = INDEX_DIR / f"{file_path.stem}.faiss"
+    metadata_path = INDEX_DIR / f"{file_path.stem}.pkl"
+    create_faiss_index_and_save(chunks, index_path, metadata_path)
+    return index_path, metadata_path
