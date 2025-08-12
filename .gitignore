@@ -12,8 +12,11 @@ __pycache__/
 # VSCode
 .vscode/
 
-# Data
+# Created files when running the app
 data/
+data_test/
+fonts/
+tests/resources/
 
 # Streamlit cache
 .streamlit/

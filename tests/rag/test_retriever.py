@@ -1,12 +1,16 @@
-from app.rag.retriever import FaissRetriever
+# tests/rag/test_retriever.py
 import os
+from pathlib import Path
+from app.rag.retriever import FaissRetriever
 
 def test_retriever_returns_results():
-    index_path = "data/index/mock_index.faiss"
-    meta_path = "data/index/mock_index.pkl"
+    APP_ENV = os.getenv("APP_ENV", "dev")
+    DATA_DIR = Path(f"data_{APP_ENV}") if APP_ENV != "dev" else Path("data")
+    index_path = DATA_DIR / "index" / "mock_index.faiss"
+    meta_path = DATA_DIR / "index" / "mock_index.pkl"
 
-    assert os.path.exists(index_path), "FAISS index file missing"
-    assert os.path.exists(meta_path), "Metadata file missing"
+    assert index_path.exists(), f"FAISS index file missing: {index_path}"
+    assert meta_path.exists(), f"Metadata file missing: {meta_path}"
 
     retriever = FaissRetriever(index_path, meta_path)
     results = retriever.retrieve("What is Python?", top_k=2)

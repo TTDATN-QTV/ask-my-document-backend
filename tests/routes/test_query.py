@@ -8,7 +8,7 @@ client = TestClient(app)
 
 def test_query_route_returns_expected_fields():
     payload = {"query": "What is Python?", "top_k": 2}
-    # mock handle_query để trả về giá trị cố định, tránh gọi logic thật gây lỗi 500
+    # Mock handle_query for returning fixed values, avoiding real logic that may cause 500 errors
     with patch("app.services.chat_service.handle_query") as mock_handle_query:
         mock_handle_query.return_value = {
             "query": payload["query"],

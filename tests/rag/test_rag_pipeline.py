@@ -1,16 +1,20 @@
-from app.rag.rag_pipeline import RAGPipeline
+# tests/rag/test_rag_pipeline.py
 import os
+from pathlib import Path
+from app.rag.rag_pipeline import RAGPipeline
 
 class MockLLM:
     def generate(self, prompt: str) -> str:
         return f"[MOCK ANSWER] Prompt received:\n{prompt}"
 
 def test_pipeline_runs_with_mock_llm():
-    index_path = "data/index/mock_index.faiss"
-    meta_path = "data/index/mock_index.pkl"
+    APP_ENV = os.getenv("APP_ENV", "dev")
+    DATA_DIR = Path(f"data_{APP_ENV}") if APP_ENV != "dev" else Path("data")
+    index_path = DATA_DIR / "index" / "mock_index.faiss"
+    meta_path = DATA_DIR / "index" / "mock_index.pkl"
 
-    assert os.path.exists(index_path), "FAISS index file missing"
-    assert os.path.exists(meta_path), "Metadata file missing"
+    assert index_path.exists(), f"FAISS index file missing: {index_path}"
+    assert meta_path.exists(), f"Metadata file missing: {meta_path}"
 
     pipeline = RAGPipeline(index_path, meta_path, llm_client=MockLLM())
     answer = pipeline.run("What is FastAPI?", top_k=2)
