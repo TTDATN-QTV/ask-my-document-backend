@@ -15,7 +15,7 @@ class QueryResponse(BaseModel):
     context: List[str]
     answer: str
 
-@router.post("", response_model=QueryResponse)
+@router.post("/query", response_model=QueryResponse)
 def query_route(request: QueryRequest):
     """
     Handles document-based queries:

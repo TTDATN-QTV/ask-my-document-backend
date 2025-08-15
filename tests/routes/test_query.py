@@ -15,7 +15,7 @@ def test_query_route_returns_expected_fields():
             "context": ["mocked context 1", "mocked context 2"],
             "answer": "mocked answer"
         }
-        response = client.post("/query", json=payload)
+        response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -28,7 +28,7 @@ def test_query_route_missing_query_field():
     Missing 'query' → should return 422 Unprocessable Entity (FastAPI validation error)
     """
     payload = {"top_k": 2}  # 'query' is missing
-    response = client.post("/query", json=payload)
+    response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 422
     data = response.json()
@@ -39,7 +39,7 @@ def test_query_route_negative_top_k():
     Negative top_k → should return 422 due to validation error
     """
     payload = {"query": "Test", "top_k": -3}
-    response = client.post("/query", json=payload)
+    response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 422
     data = response.json()
@@ -57,7 +57,7 @@ def test_query_route_empty_context(monkeypatch):
     monkeypatch.setattr(chat_service, "handle_query", mock_handle_query)
 
     payload = {"query": "Random string that matches nothing", "top_k": 2}
-    response = client.post("/query", json=payload)
+    response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 200
     data = response.json()
@@ -76,7 +76,7 @@ def test_query_route_llm_error(monkeypatch):
     monkeypatch.setattr(chat_service, "handle_query", mock_handle_query)
 
     payload = {"query": "Test", "top_k": 2}
-    response = client.post("/query", json=payload)
+    response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 500
     data = response.json()

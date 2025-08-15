@@ -1,5 +1,6 @@
 # app/main.py
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.routes import upload, query
 
 def create_app() -> FastAPI:
@@ -9,8 +10,17 @@ def create_app() -> FastAPI:
         version="0.1.0",
     )
 
-    app.include_router(upload.router, prefix="/upload", tags=["Upload"])
-    app.include_router(query.router, prefix="/query", tags=["Query"])
+    # CORS middleware for Swagger UI
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # hoặc giới hạn domain cụ thể
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    app.include_router(upload.router, prefix="/documents", tags=["Upload"])
+    app.include_router(query.router, prefix="/documents", tags=["Query"])
 
     return app
 
