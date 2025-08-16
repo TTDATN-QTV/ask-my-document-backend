@@ -24,10 +24,20 @@ python -m pip install --upgrade pip
 # 5. Install dependencies
 pip install -r requirements.txt
 
-# 6. Set environment variable for the current session
-$env:APP_ENV = "test"
+# 6. Fetch environment variables from .env file
+$envFile = ".env"
+$envValue = "unknown"
+if (Test-Path $envFile) {
+    $lines = Get-Content $envFile
+    foreach ($line in $lines) {
+        if ($line -match "^APP_ENV\s*=\s*(.+)$") {
+            $envValue = $Matches[1]
+            break
+        }
+    }
+}
 
-Write-Host "Environment setup completed! APP_ENV=$env:APP_ENV" -ForegroundColor Green
+Write-Host "Environment setup completed! Current APP_ENV: $envValue" -ForegroundColor Green
 
 # 7. (Optional) Start FastAPI server in development mode
 Write-Host "Starting FastAPI server..." -ForegroundColor Yellow
