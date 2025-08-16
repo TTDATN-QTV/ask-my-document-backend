@@ -7,7 +7,7 @@ from unittest.mock import patch
 client = TestClient(app)
 
 def test_query_route_returns_expected_fields():
-    payload = {"query": "What is Python?", "top_k": 2}
+    payload = {"query": "What is Python?", "top_k": 2, "file_id": "mock-file-id"}
     # Mock handle_query for returning fixed values, avoiding real logic that may cause 500 errors
     with patch("app.services.chat_service.handle_query") as mock_handle_query:
         mock_handle_query.return_value = {
@@ -51,12 +51,12 @@ def test_query_route_empty_context(monkeypatch):
     """
     from app.services import chat_service
 
-    def mock_handle_query(query, top_k):
+    def mock_handle_query(query, top_k, file_id=None):
         return {"query": query, "context": [], "answer": "No relevant documents found."}
 
     monkeypatch.setattr(chat_service, "handle_query", mock_handle_query)
 
-    payload = {"query": "Random string that matches nothing", "top_k": 2}
+    payload = {"query": "Random string that matches nothing", "top_k": 2, "file_id": "mock-file-id"}
     response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 200
@@ -70,12 +70,12 @@ def test_query_route_llm_error(monkeypatch):
     """
     from app.services import chat_service
 
-    def mock_handle_query(query, top_k):
+    def mock_handle_query(query, top_k, file_id=None):
         raise RuntimeError("LLM service unavailable")
 
     monkeypatch.setattr(chat_service, "handle_query", mock_handle_query)
 
-    payload = {"query": "Test", "top_k": 2}
+    payload = {"query": "Test", "top_k": 2, "file_id": "mock-file-id"}
     response = client.post("/documents/query", json=payload)
 
     assert response.status_code == 500
