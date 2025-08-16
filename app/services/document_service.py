@@ -1,6 +1,7 @@
 # app/services/document_service.py
 from pathlib import Path
 from fastapi import UploadFile
+import uuid
 
 from app.config import UPLOAD_DIR, INDEX_DIR
 from app.utils.pdf_parser import extract_text
@@ -11,11 +12,13 @@ def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
     Save the uploaded file to the given upload_dir with original filename.
     Automatically uses separate folders for prod/test depending on APP_ENV.
     """
+    file_id = str(uuid.uuid4())
+    ext = Path(file.filename).suffix
+    file_path = upload_dir / f"{file_id}{ext}"
     upload_dir.mkdir(parents=True, exist_ok=True)
-    file_path = upload_dir / file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
-    return file_path
+    return file_path, file_id
 
 def split_text_to_docs(text: str, chunk_size: int = 500) -> list[str]:
     """
@@ -29,17 +32,12 @@ def create_faiss_index_and_save(docs: list[str], index_path: Path, metadata_path
     """
     build_faiss_index(docs, index_path, metadata_path)
 
-def process_and_index_document(file_path: Path):
+def process_and_index_document(file_path: Path, file_id: str):
     """
     Extract text from PDF, split into chunks, and build FAISS index.
-    Saves index/metadata into environment-specific INDEX_DIR.
-    Handles unreadable/empty PDFs gracefully.
+    Index/metadata are saved using file_id.
     """
-    try:
-        text = extract_text(file_path)
-    except Exception:
-        # Catch all PDF reading errors and return business logic message
-        raise ValueError("Empty or no text extracted from PDF.")
+    text = extract_text(file_path)
 
     if not text or not text.strip():
         raise ValueError("Empty or no text extracted from PDF.")
@@ -48,7 +46,7 @@ def process_and_index_document(file_path: Path):
     if not chunks or all(not c.strip() for c in chunks):
         raise ValueError("Empty or no text extracted from PDF.")
 
-    index_path = INDEX_DIR / f"{file_path.stem}.faiss"
-    metadata_path = INDEX_DIR / f"{file_path.stem}.pkl"
+    index_path = INDEX_DIR / f"{file_id}.faiss"
+    metadata_path = INDEX_DIR / f"{file_id}.pkl"
     create_faiss_index_and_save(chunks, index_path, metadata_path)
     return index_path, metadata_path, chunks

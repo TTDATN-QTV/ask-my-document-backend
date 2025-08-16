@@ -28,8 +28,8 @@ async def upload_document(file: UploadFile = File(...)):
 
     try:
         # Save and process
-        saved_path = document_service.save_upload_file(file)
-        index_path, metadata_path, chunks = document_service.process_and_index_document(saved_path)
+        saved_path, file_id = document_service.save_upload_file(file)
+        index_path, metadata_path, chunks = document_service.process_and_index_document(saved_path, file_id=file_id)
 
         # If downstream returns empty chunks
         if not chunks or all(not c.strip() for c in chunks):
@@ -37,6 +37,7 @@ async def upload_document(file: UploadFile = File(...)):
 
         return {
             "status": "success",
+            "file_id": file_id,
             "filename": file.filename,
             "chunks": len(chunks),
             "index_path": str(index_path),
