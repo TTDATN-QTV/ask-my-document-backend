@@ -58,3 +58,9 @@ META_PATH = INDEX_DIR / "mock_index.pkl"
 def get_relevant_context(query: str, top_k: int = 5):
     retriever = FaissRetriever(INDEX_PATH, META_PATH)
     return retriever.retrieve(query, top_k)
+
+def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 5):
+    index_path = INDEX_DIR / f"{file_id}.faiss"
+    meta_path = INDEX_DIR / f"{file_id}.pkl"
+    retriever = FaissRetriever(index_path, meta_path)
+    return retriever.retrieve(query, top_k)

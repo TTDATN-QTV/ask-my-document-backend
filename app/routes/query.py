@@ -9,6 +9,7 @@ router = APIRouter()
 class QueryRequest(BaseModel):
     query: str = Field(..., min_length=1, description="User query text")
     top_k: int = Field(2, ge=1, description="Number of top results to retrieve")
+    file_id: str = Field(..., description="ID of the uploaded PDF file")
 
 class QueryResponse(BaseModel):
     query: str
@@ -24,7 +25,7 @@ def query_route(request: QueryRequest):
     - Returns query, context, and answer
     """
     try:
-        result = chat_service.handle_query(request.query, request.top_k)
+        result = chat_service.handle_query(request.query, request.top_k, request.file_id)
         return result
     except Exception as e:
         # Match test expectation: {"error": "..."} with status 500
