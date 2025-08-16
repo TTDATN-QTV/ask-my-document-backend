@@ -1,10 +1,10 @@
 # app/main.py
-from dotenv import load_dotenv
-load_dotenv()
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import upload, query
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def create_app() -> FastAPI:
     app = FastAPI(

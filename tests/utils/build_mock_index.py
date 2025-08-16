@@ -4,6 +4,9 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 APP_ENV = os.getenv("APP_ENV", "dev")
 DATA_DIR = Path(f"data_{APP_ENV}") if APP_ENV != "dev" else Path("data")
