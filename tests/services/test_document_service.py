@@ -36,9 +36,9 @@ def test_save_upload_file(tmp_path):
     file_path.write_bytes(b"%PDF-1.4 sample pdf content")
 
     upload_file = UploadFile(filename="sample.pdf", file=open(file_path, "rb"))
-    saved_path = document_service.save_upload_file(upload_file, upload_dir=UPLOAD_DIR)
+    saved_path, file_id = document_service.save_upload_file(upload_file, upload_dir=UPLOAD_DIR)
     assert saved_path.exists()
-    assert saved_path.name.endswith("sample.pdf")
+    assert file_id is not None
 
 def test_extract_text(tmp_path):
     sample_pdf_path = Path("tests/resources/sample.pdf")
@@ -66,7 +66,7 @@ def test_full_document_process(tmp_path):
 
     with open(sample_pdf_path, "rb") as f:
         upload_file = UploadFile(filename="sample.pdf", file=f)
-        saved_path = document_service.save_upload_file(upload_file, upload_dir=UPLOAD_DIR)
+        saved_path, file_id = document_service.save_upload_file(upload_file, upload_dir=UPLOAD_DIR)
 
     text = pdf_parser.extract_text(saved_path)
     docs = document_service.split_text_to_docs(text)
