@@ -10,8 +10,9 @@ class MockLLM:
 def test_pipeline_runs_with_mock_llm():
     APP_ENV = os.getenv("APP_ENV", "dev")
     DATA_DIR = Path(f"data_{APP_ENV}") if APP_ENV != "dev" else Path("data")
-    index_path = DATA_DIR / "index" / "mock_index.faiss"
-    meta_path = DATA_DIR / "index" / "mock_index.pkl"
+    file_id = "mock-file-id"
+    index_path = DATA_DIR / "index" / f"{file_id}.faiss"
+    meta_path = DATA_DIR / "index" / f"{file_id}.pkl"
 
     assert index_path.exists(), f"FAISS index file missing: {index_path}"
     assert meta_path.exists(), f"Metadata file missing: {meta_path}"
