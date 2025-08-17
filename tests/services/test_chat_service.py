@@ -20,9 +20,9 @@ def test_handle_query_returns_expected_keys(mock_context, mock_answer):
     """
     UNIT TEST: Ensure handle_query returns dict with correct keys and values when dependencies are mocked.
     """
-    with patch("app.services.chat_service.get_relevant_context", return_value=mock_context):
+    with patch("app.services.chat_service.get_relevant_context_for_file", return_value=mock_context):
         with patch("app.services.chat_service.generate_answer", return_value=mock_answer):
-            result = chat_service.handle_query("What is FastAPI?")
+            result = chat_service.handle_query("What is FastAPI?", file_id="mock-file-id")
 
     assert isinstance(result, dict)
     assert set(result.keys()) == {"query", "context", "answer"}
@@ -34,20 +34,20 @@ def test_handle_query_calls_dependencies_with_correct_args(mock_context, mock_an
     """
     UNIT TEST: Verify get_relevant_context and generate_answer are called with correct arguments.
     """
-    with patch("app.services.chat_service.get_relevant_context", return_value=mock_context) as mock_retriever:
+    with patch("app.services.chat_service.get_relevant_context_for_file", return_value=mock_context) as mock_retriever:
         with patch("app.services.chat_service.generate_answer", return_value=mock_answer) as mock_llm:
-            chat_service.handle_query("Explain pytest", top_k=5)
+            chat_service.handle_query("Explain pytest", top_k=5, file_id="mock-file-id")
 
-    mock_retriever.assert_called_once_with("Explain pytest", top_k=5)
+    mock_retriever.assert_called_once_with("Explain pytest", "mock-file-id", top_k=5)
     mock_llm.assert_called_once_with("Explain pytest", mock_context)
 
 def test_handle_query_with_empty_results(mock_answer):
     """
     UNIT TEST: Handle case where retriever returns no documents.
     """
-    with patch("app.services.chat_service.get_relevant_context", return_value=[]):
+    with patch("app.services.chat_service.get_relevant_context_for_file", return_value=[]):
         with patch("app.services.chat_service.generate_answer", return_value=mock_answer):
-            result = chat_service.handle_query("Unknown topic")
+            result = chat_service.handle_query("Unknown topic", file_id="mock-file-id")
 
     assert result["context"] == []
     assert result["answer"] == mock_answer
@@ -62,7 +62,7 @@ def test_handle_query_integration_with_mock_index():
     """
     fake_answer = "Mocked integration answer."
     with patch("app.services.chat_service.generate_answer", return_value=fake_answer):
-        result = chat_service.handle_query("What is Python?", top_k=2)
+        result = chat_service.handle_query("What is Python?", top_k=2, file_id="mock-file-id")
 
     assert isinstance(result["context"], list)
     assert len(result["context"]) > 0

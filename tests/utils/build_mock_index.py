@@ -12,8 +12,9 @@ APP_ENV = os.getenv("APP_ENV", "dev")
 DATA_DIR = Path(f"data_{APP_ENV}") if APP_ENV != "dev" else Path("data")
 
 INDEX_DIR = DATA_DIR / "index"
-FAISS_PATH = INDEX_DIR / "mock_index.faiss"
-META_PATH = INDEX_DIR / "mock_index.pkl"
+FILE_ID = "mock-file-id"
+FAISS_PATH = INDEX_DIR / f"{FILE_ID}.faiss"
+META_PATH = INDEX_DIR / f"{FILE_ID}.pkl"
 
 def build_mock_index():
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
