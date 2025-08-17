@@ -1,5 +1,6 @@
 import os
 import requests
+from langchain.llms import CTransformers
 
 class HuggingFaceLLM:
     def __init__(self, model="deepset/roberta-base-squad2"):
@@ -31,5 +32,28 @@ class HuggingFaceLLM:
         else:
             return str(result)
 
+class LocalLLM:
+    def __init__(self, model_path="models/llama-2-7b-chat.ggmlv3.q8_0.bin"):
+        self.llm = CTransformers(
+            model=model_path,
+            model_type="llama",
+            config={
+                "max_new_tokens": 256,
+                "temperature": 0.01
+            }
+        )
+
+    def generate(self, question: str, context_docs: list[str]) -> str:
+        context_text = "\n".join(context_docs)
+        prompt = (
+            "Use the following pieces of information to answer the user's question.\n"
+            "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
+            f"Context: {context_text}\n"
+            f"Question: {question}\n"
+            "Only return the helpful answer below and nothing else.\n"
+            "Helpful answer:"
+        )
+        return self.llm(prompt)
+
 def get_default_llm():
-    return HuggingFaceLLM()
+    return LocalLLM()

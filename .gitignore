@@ -20,3 +20,6 @@ tests/resources/
 
 # Streamlit cache
 .streamlit/
+
+# Model files
+models/
