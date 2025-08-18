@@ -32,7 +32,7 @@ async def upload_document(file: UploadFile = File(...)):
         index_path, metadata_path, chunks = document_service.process_and_index_document(saved_path, file_id=file_id)
 
         # If downstream returns empty chunks
-        if not chunks or all(not c.strip() for c in chunks):
+        if not chunks or all(not c["content"].strip() for c in chunks):
             raise HTTPException(status_code=422, detail="Empty or no text extracted from PDF.")
 
         return {

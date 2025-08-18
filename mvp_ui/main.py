@@ -45,6 +45,12 @@ if st.button("Ask") and query and file_ids_input:
         st.subheader("Answer")
         st.write(result.get("answer", "No answer"))
         st.subheader("Context")
-        st.write(result.get("context", []))
+        context_chunks = result.get("context", [])
+        for chunk in context_chunks:
+            st.markdown(f"**File:** {chunk['file_name']} | **Page:** {chunk['page_number']}")
+            st.write(chunk['content'])
+            pdf_path = f"data/uploads/{chunk['file_id']}.pdf"
+            if st.button(f"Open {chunk['file_name']} - Page {chunk['page_number']}", key=f"{chunk['file_id']}_{chunk['page_number']}"):
+                st.markdown(f"[Open PDF]({pdf_path})")
     else:
         st.error(response.text)

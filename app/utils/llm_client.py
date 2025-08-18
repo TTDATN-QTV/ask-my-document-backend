@@ -18,7 +18,7 @@ class HuggingFaceLLM:
                 "question": question,
                 "context": context_text
             }
-        }
+        } 
         response = requests.post(self.api_url, headers=headers, json=payload)
         try:
             response.raise_for_status()

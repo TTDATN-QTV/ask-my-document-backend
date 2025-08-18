@@ -20,13 +20,24 @@ def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
         f.write(file.file.read())
     return file_path, file_id
 
-def split_text_to_docs(text: str, chunk_size: int = 500) -> list[str]:
+def split_text_to_docs(text: str, file_id: str, file_name: str, chunk_size: int = 500) -> list[dict]:
     """
     Split text into smaller chunks (docs) of max length chunk_size.
+    Each chunk is a dict with metadata: file_id, file_name, page_number, content.
     """
-    return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
+    docs = []
+    for i in range(0, len(text), chunk_size):
+        chunk_text = text[i:i + chunk_size]
+        page_number = i // chunk_size + 1
+        docs.append({
+            "file_id": file_id,
+            "file_name": file_name,
+            "page_number": page_number,
+            "content": chunk_text
+        })
+    return docs
 
-def create_faiss_index_and_save(docs: list[str], index_path: Path, metadata_path: Path):
+def create_faiss_index_and_save(docs: list[dict], index_path: Path, metadata_path: Path):
     """
     Build FAISS index from docs and save both index and metadata to disk.
     """
@@ -42,8 +53,8 @@ def process_and_index_document(file_path: Path, file_id: str):
     if not text or not text.strip():
         raise ValueError("Empty or no text extracted from PDF.")
 
-    chunks = split_text_to_docs(text)
-    if not chunks or all(not c.strip() for c in chunks):
+    chunks = split_text_to_docs(text, file_id, file_path.name)
+    if not chunks or all(not c["content"].strip() for c in chunks):
         raise ValueError("Empty or no text extracted from PDF.")
 
     index_path = INDEX_DIR / f"{file_id}.faiss"

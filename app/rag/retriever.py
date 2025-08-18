@@ -23,7 +23,7 @@ class FaissRetriever:
 
         self.embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    def retrieve(self, query: str, top_k: int = 5) -> List[str]:
+    def retrieve(self, query: str, top_k: int = 5) -> List[dict]:
         query_emb = self.embed_model.encode([query])
         distances, indices = self.index.search(query_emb, top_k)
 
@@ -34,19 +34,19 @@ class FaissRetriever:
         return results
 
 
-def build_faiss_index(docs: list[str], index_path: Path, metadata_path: Path):
+def build_faiss_index(docs: list[dict], index_path: Path, metadata_path: Path):
+    # docs: list of dict: {"content": ..., "file_id": ..., "file_name": ..., "page_number": ...}
     index_path.parent.mkdir(parents=True, exist_ok=True)
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
 
     model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-    embeddings = model.encode(docs)
+    embeddings = model.encode([doc["content"] for doc in docs])
 
     dim = embeddings.shape[1]
     index = faiss.IndexFlatL2(dim)
     index.add(embeddings)
 
     faiss.write_index(index, str(index_path))
-
     with open(metadata_path, "wb") as f:
         pickle.dump(docs, f)
 

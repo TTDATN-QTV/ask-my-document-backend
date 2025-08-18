@@ -11,9 +11,15 @@ class QueryRequest(BaseModel):
     top_k: int = Field(2, ge=1, description="Number of top results to retrieve")
     file_ids: List[str] = Field(..., description="List of uploaded PDF file IDs")
 
+class ContextChunk(BaseModel):
+    file_id: str
+    file_name: str
+    page_number: int
+    content: str
+
 class QueryResponse(BaseModel):
     query: str
-    context: List[str]
+    context: List[ContextChunk]
     answer: str
 
 @router.post("/query", response_model=QueryResponse)
