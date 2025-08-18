@@ -4,7 +4,7 @@ from pathlib import Path
 import faiss
 import pickle
 from typing import List
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, CrossEncoder
 
 # ==== Config: dynamic data folder based on APP_ENV ====
 APP_ENV = os.getenv("APP_ENV", "dev")  # default dev
@@ -59,7 +59,7 @@ def get_relevant_context(query: str, top_k: int = 2):
     retriever = FaissRetriever(INDEX_PATH, META_PATH)
     return retriever.retrieve(query, top_k)
 
-def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 2, threshold: float = 0.7):
+def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 2, threshold: float = None):
     index_path = INDEX_DIR / f"{file_id}.faiss"
     meta_path = INDEX_DIR / f"{file_id}.pkl"
     retriever = FaissRetriever(index_path, meta_path)
@@ -67,6 +67,17 @@ def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 2, thre
     distances, indices = retriever.index.search(query_emb, top_k)
     results = []
     for dist, idx in zip(distances[0], indices[0]):
-        if idx != -1 and dist < threshold:
+        if idx != -1 and (threshold is None or dist < threshold):
             results.append(retriever.metadata[idx])
     return results
+
+# Add cross-encoder model for reranking
+cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+
+def rerank_context(query: str, context_chunks: list[dict], top_n: int = 2) -> list[dict]:
+    if not context_chunks:
+        return []
+    pairs = [(query, chunk["content"]) for chunk in context_chunks]
+    scores = cross_encoder.predict(pairs)
+    ranked = sorted(zip(scores, context_chunks), key=lambda x: x[0], reverse=True)
+    return [chunk for score, chunk in ranked[:min(top_n, len(ranked))]]

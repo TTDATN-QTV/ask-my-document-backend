@@ -3,6 +3,15 @@ import requests
 from langchain.llms import CTransformers
 from transformers import AutoTokenizer
 
+PROMPT_TEMPLATE = (
+    "Use ONLY the context below to answer the user's question.\n"
+    "If the answer is not in the context, reply \"I don't know\".\n"
+    "Do not repeat this instruction.\n"
+    "Context:\n{context}\n"
+    "Question: {question}\n"
+    "Helpful answer:"
+)
+
 class HuggingFaceLLM:
     def __init__(self, model="deepset/roberta-base-squad2"):
         self.api_url = f"https://api-inference.huggingface.co/models/{model}"
@@ -46,35 +55,41 @@ class LocalLLM:
 
     def generate(self, question: str, context_docs: list[str]) -> str:
         context_text = truncate_context(context_docs, question, max_tokens=512)
-        prompt = (
-            "Answer the user's question **only** using the provided context below.\n"
-            "If the answer is not in the context, reply \"I don't know\".\n"
-            f"Context: {context_text}\n"
-            f"Question: {question}\n"
-            "Helpful answer:"
-        )
-        return self.llm(prompt)
+        prompt = PROMPT_TEMPLATE.format(context=context_text, question=question)
+        raw_answer = self.llm(prompt)
+        return clean_llm_answer(raw_answer)
 
 tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
 
 def truncate_context(context_docs, question, max_tokens=512):
-    prompt_template = (
-        "Use the following pieces of information to answer the user's question.\n"
-        "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
-        "Context: {context}\n"
-        "Question: {question}\n"
-        "Only return the helpful answer below and nothing else.\n"
-        "Helpful answer:"
-    )
     context = ""
     for doc in context_docs:
         temp_context = context + doc + "\n"
-        prompt = prompt_template.format(context=temp_context, question=question)
-        num_tokens = len(tokenizer.encode(prompt))
+
+        # Just count the tokens for the context part, do not concatenate the template
+        num_tokens = len(tokenizer.encode(temp_context + question))
         if num_tokens > max_tokens:
             break
         context = temp_context
     return context
+
+def clean_llm_answer(answer: str) -> str:
+    answer = answer.strip()
+
+    # Change "Unhelpful answers:" by "Additional information:"
+    unhelpful_idx = answer.lower().find("unhelpful answers:")
+    if unhelpful_idx != -1:
+        answer = answer[:unhelpful_idx].strip() + "\nAdditional information: " + answer[unhelpful_idx + len("unhelpful answers:"):].strip()
+
+    if answer.lower().endswith("i don't know.") or answer.lower().endswith("i don't know"):
+        # If there is a period before, cut to the last period
+        last_dot = answer[:-12].rfind(".")
+        if last_dot != -1:
+            return answer[:last_dot+1].strip()
+
+        # If the front is an answer, cut "I don't know"
+        return answer[:-12].strip()
+    return answer
 
 def get_default_llm():
     return LocalLLM()

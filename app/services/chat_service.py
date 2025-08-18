@@ -1,5 +1,5 @@
 # app/services/chat_service.py
-from app.rag.retriever import get_relevant_context_for_file
+from app.rag.retriever import get_relevant_context_for_file, rerank_context
 from app.rag.rag_pipeline import generate_answer
 
 def handle_query(user_query: str, top_k: int = 2, file_ids: list = None) -> dict:
@@ -24,6 +24,18 @@ def handle_query(user_query: str, top_k: int = 2, file_ids: list = None) -> dict
     # Optionally, limit total context_docs if needed (e.g. max 10)
     # MAX_CONTEXT = 10
     # context_docs = context_docs[:MAX_CONTEXT]
+
+    # Rerank entire context_docs, get top_k most relevant (if any)
+    if context_docs:
+        context_docs = rerank_context(user_query, context_docs, top_n=top_k)
+
+    # If still blank, we can return a message or pass it to the LLM to answer "I don't know"
+    if not context_docs:
+        return {
+            "query": user_query,
+            "context": context_docs,
+            "answer": "I don't know"
+        }
 
     answer = generate_answer(user_query, context_docs)
 
