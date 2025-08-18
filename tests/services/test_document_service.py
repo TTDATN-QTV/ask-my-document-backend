@@ -45,7 +45,7 @@ def test_extract_text(tmp_path):
     if not sample_pdf_path.exists():
         pytest.skip("Sample PDF file not found, skipping text extraction test.")
     
-    text = pdf_parser.extract_text(sample_pdf_path)
+    text = pdf_parser.extract_text_chunks(sample_pdf_path)
     assert isinstance(text, str)
     assert len(text) > 0
 
@@ -68,7 +68,7 @@ def test_full_document_process(tmp_path):
         upload_file = UploadFile(filename="sample.pdf", file=f)
         saved_path, file_id = document_service.save_upload_file(upload_file, upload_dir=UPLOAD_DIR)
 
-    text = pdf_parser.extract_text(saved_path)
+    text = pdf_parser.extract_text_chunks(saved_path)
     docs = document_service.split_text_to_docs(text)
 
     index_path = INDEX_DIR / "sample_index.faiss"

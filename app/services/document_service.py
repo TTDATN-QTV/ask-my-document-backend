@@ -4,7 +4,7 @@ from fastapi import UploadFile
 import uuid
 
 from app.config import UPLOAD_DIR, INDEX_DIR
-from app.utils.pdf_parser import extract_text
+from app.utils.pdf_parser import extract_text_chunks
 from app.rag.retriever import build_faiss_index
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -22,20 +22,22 @@ def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
         f.write(file.file.read())
     return file_path, file_id
 
-def split_text_to_docs(text: str, file_id: str, file_name: str, chunk_size: int = 500, chunk_overlap: int = 50) -> list[dict]:
+def split_text_to_docs(pages: list[dict], file_id: str, file_name: str, chunk_size: int = 500) -> list[dict]:
     """
-    Using LangChain for text splitting with overlap and metadata preservation.
+    Split text from PDF pages into smaller chunks for indexing.
     """
-    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    chunks = splitter.split_text(text)
     docs = []
-    for i, chunk_text in enumerate(chunks):
-        docs.append({
-            "file_id": file_id,
-            "file_name": file_name,
-            "page_number": i + 1,
-            "content": chunk_text
-        })
+    for page in pages:
+        page_number = page["page_number"]
+        text = page["content"]
+        for i in range(0, len(text), chunk_size):
+            chunk_text = text[i:i + chunk_size]
+            docs.append({
+                "file_id": file_id,
+                "file_name": file_name,
+                "page_number": page_number,
+                "content": chunk_text
+            })
     return docs
 
 def create_faiss_index_and_save(docs: list[dict], index_path: Path, metadata_path: Path):
@@ -49,9 +51,9 @@ def process_and_index_document(file_path: Path, file_id: str):
     Extract text from PDF, split into chunks, and build FAISS index.
     Index/metadata are saved using file_id.
     """
-    text = extract_text(file_path)
+    text = extract_text_chunks(file_path)
 
-    if not text or not text.strip():
+    if not text or all(not page["content"].strip() for page in text):
         raise ValueError("Empty or no text extracted from PDF.")
 
     chunks = split_text_to_docs(text, file_id, file_path.name)
