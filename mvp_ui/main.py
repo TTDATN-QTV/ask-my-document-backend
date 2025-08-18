@@ -50,7 +50,11 @@ if st.button("Ask") and query and file_ids_input:
             st.markdown(f"**File:** {chunk['file_name']} | **Page:** {chunk['page_number']}")
             st.write(chunk['content'])
             pdf_path = f"data/uploads/{chunk['file_id']}.pdf"
-            if st.button(f"Open {chunk['file_name']} - Page {chunk['page_number']}", key=f"{chunk['file_id']}_{chunk['page_number']}"):
-                st.markdown(f"[Open PDF]({pdf_path})")
+
+            # Using markdown link instead of button to avoid losing state
+            st.markdown(
+                f"[🔗 Open PDF at {chunk['file_name']} (page {chunk['page_number']})]({pdf_path})",
+                unsafe_allow_html=True
+            )
     else:
         st.error(response.text)

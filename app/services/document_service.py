@@ -7,6 +7,8 @@ from app.config import UPLOAD_DIR, INDEX_DIR
 from app.utils.pdf_parser import extract_text
 from app.rag.retriever import build_faiss_index
 
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
 def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
     """
     Save the uploaded file to the given upload_dir with original filename.
@@ -20,19 +22,18 @@ def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
         f.write(file.file.read())
     return file_path, file_id
 
-def split_text_to_docs(text: str, file_id: str, file_name: str, chunk_size: int = 500) -> list[dict]:
+def split_text_to_docs(text: str, file_id: str, file_name: str, chunk_size: int = 500, chunk_overlap: int = 50) -> list[dict]:
     """
-    Split text into smaller chunks (docs) of max length chunk_size.
-    Each chunk is a dict with metadata: file_id, file_name, page_number, content.
+    Using LangChain for text splitting with overlap and metadata preservation.
     """
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    chunks = splitter.split_text(text)
     docs = []
-    for i in range(0, len(text), chunk_size):
-        chunk_text = text[i:i + chunk_size]
-        page_number = i // chunk_size + 1
+    for i, chunk_text in enumerate(chunks):
         docs.append({
             "file_id": file_id,
             "file_name": file_name,
-            "page_number": page_number,
+            "page_number": i + 1,
             "content": chunk_text
         })
     return docs

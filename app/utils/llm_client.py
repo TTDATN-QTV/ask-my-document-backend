@@ -47,11 +47,10 @@ class LocalLLM:
     def generate(self, question: str, context_docs: list[str]) -> str:
         context_text = truncate_context(context_docs, question, max_tokens=512)
         prompt = (
-            "Use the following pieces of information to answer the user's question.\n"
-            "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
+            "Answer the user's question **only** using the provided context below.\n"
+            "If the answer is not in the context, reply \"I don't know\".\n"
             f"Context: {context_text}\n"
             f"Question: {question}\n"
-            "Only return the helpful answer below and nothing else.\n"
             "Helpful answer:"
         )
         return self.llm(prompt)

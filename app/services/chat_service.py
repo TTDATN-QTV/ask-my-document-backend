@@ -20,10 +20,10 @@ def handle_query(user_query: str, top_k: int = 2, file_ids: list = None) -> dict
     context_docs = []
     for file_id in file_ids:
         context_docs += get_relevant_context_for_file(user_query, file_id, top_k=top_k)
-    # Limit total number of context_docs
     context_docs = context_docs[:top_k]
 
-    answer = generate_answer(user_query, [c["content"] for c in context_docs])
+    # Send the entire list of context documents to the LLM
+    answer = generate_answer(user_query, context_docs)
 
     return {
         "query": user_query,

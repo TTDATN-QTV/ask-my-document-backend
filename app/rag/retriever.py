@@ -21,7 +21,7 @@ class FaissRetriever:
         with open(metadata_path, "rb") as f:
             self.metadata = pickle.load(f)
 
-        self.embed_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+        self.embed_model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
 
     def retrieve(self, query: str, top_k: int = 5) -> List[dict]:
         query_emb = self.embed_model.encode([query])
@@ -39,7 +39,7 @@ def build_faiss_index(docs: list[dict], index_path: Path, metadata_path: Path):
     index_path.parent.mkdir(parents=True, exist_ok=True)
     metadata_path.parent.mkdir(parents=True, exist_ok=True)
 
-    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
     embeddings = model.encode([doc["content"] for doc in docs])
 
     dim = embeddings.shape[1]

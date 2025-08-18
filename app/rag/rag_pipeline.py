@@ -35,11 +35,14 @@ class RAGPipeline:
         answer = self.llm_client.generate(prompt)
         return answer
 
-def generate_answer(query: str, context_docs: list[str], llm_client=None) -> str:
+def generate_answer(query: str, context_docs: list[dict], llm_client=None) -> str:
     """
     Generate answer from query and context using LLM.
     """
     if llm_client is None:
         from app.utils.llm_client import get_default_llm
         llm_client = get_default_llm()
-    return llm_client.generate(query, context_docs)
+
+    # Only get the content of the context
+    context_texts = [c["content"] for c in context_docs]
+    return llm_client.generate(query, context_texts)
