@@ -1,6 +1,15 @@
 # app/routes/upload.py
 from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi.responses import FileResponse
 from app.services import document_service
+from app.config import UPLOAD_DIR
+import logging
+
+# Configure logging for this module
+logging.basicConfig(level=logging.INFO)  # ensures logs show in console
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.propagate = True  # allow log to propagate to root logger (uvicorn)
 
 # Try to import PdfReadError from either pypdf or PyPDF2; fall back to a dummy class.
 try:
@@ -29,11 +38,15 @@ async def upload_document(file: UploadFile = File(...)):
     try:
         # Save and process
         saved_path, file_id = document_service.save_upload_file(file)
-        index_path, metadata_path, chunks = document_service.process_and_index_document(saved_path, file_id=file_id)
+        index_path, metadata_path, chunks = document_service.process_and_index_document(
+            saved_path, file_id=file_id
+        )
 
         # If downstream returns empty chunks
         if not chunks or all(not c["content"].strip() for c in chunks):
             raise HTTPException(status_code=422, detail="Empty or no text extracted from PDF.")
+
+        logger.info("Uploaded PDF: %s, file_id: %s, chunks: %d", file.filename, file_id, len(chunks))
 
         return {
             "status": "success",
@@ -45,14 +58,28 @@ async def upload_document(file: UploadFile = File(...)):
             "message": "File uploaded and indexed successfully."
         }
 
-    # Mapping business logic/PDF reading errors to 422 for test pass instead of 500
     except ValueError as e:
-        # Example: "No text found in document"
         raise HTTPException(status_code=422, detail=str(e))
     except PdfReadError as e:
         raise HTTPException(status_code=422, detail=f"Invalid or unreadable PDF: {e}")
     except HTTPException:
         raise
     except Exception as e:
-        # "Unexpected error occurred" => 500
+        logger.error("Unexpected error during upload: %s", e, exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/pdf/{file_id}")
+def get_pdf(file_id: str):
+    pdf_path = UPLOAD_DIR / f"{file_id}.pdf"
+
+    # Debug logging
+    logger.info("UPLOAD_DIR: %s", UPLOAD_DIR)
+    logger.info("Checking PDF path: %s", pdf_path)
+    logger.info("File exists: %s", pdf_path.exists())
+
+    if not pdf_path.exists():
+        logger.warning("PDF not found at: %s", pdf_path)
+        raise HTTPException(status_code=404, detail="PDF not found")
+
+    return FileResponse(str(pdf_path), media_type="application/pdf")

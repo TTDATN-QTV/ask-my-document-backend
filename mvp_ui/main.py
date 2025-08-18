@@ -47,13 +47,11 @@ if st.button("Ask") and query and file_ids_input:
         st.subheader("Context")
         context_chunks = result.get("context", [])
         for chunk in context_chunks:
-            st.markdown(f"**File:** {chunk['file_name']} | **Page:** {chunk['page_number']}")
+            st.markdown(f"**File:** {chunk['file_name']} | **Page:** {chunk['page_number'] + 1}")
             st.write(chunk['content'])
-            pdf_path = f"data/uploads/{chunk['file_id']}.pdf"
-
-            # Using markdown link instead of button to avoid losing state
+            pdf_url = f"http://localhost:8000/documents/pdf/{chunk['file_id']}"
             st.markdown(
-                f"[🔗 Open PDF at {chunk['file_name']} (page {chunk['page_number']})]({pdf_path})",
+                f"[Open PDF at {chunk['file_name']} (page {chunk['page_number'] + 1})]({pdf_url})",
                 unsafe_allow_html=True
             )
     else:
