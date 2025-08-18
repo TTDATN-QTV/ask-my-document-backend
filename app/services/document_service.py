@@ -2,6 +2,7 @@
 from pathlib import Path
 from fastapi import UploadFile
 import uuid
+import json
 
 from app.config import UPLOAD_DIR, INDEX_DIR
 from app.utils.pdf_parser import extract_text_chunks
@@ -20,6 +21,7 @@ def save_upload_file(file: UploadFile, upload_dir: Path = UPLOAD_DIR) -> Path:
     upload_dir.mkdir(parents=True, exist_ok=True)
     with open(file_path, "wb") as f:
         f.write(file.file.read())
+    update_file_map(file_id, file.filename)
     return file_path, file_id
 
 def split_text_to_docs(pages: list[dict], file_id: str, file_name: str, chunk_size: int = 500) -> list[dict]:
@@ -64,3 +66,14 @@ def process_and_index_document(file_path: Path, file_id: str):
     metadata_path = INDEX_DIR / f"{file_id}.pkl"
     create_faiss_index_and_save(chunks, index_path, metadata_path)
     return index_path, metadata_path, chunks
+
+def update_file_map(file_id: str, original_name: str):
+    map_path = UPLOAD_DIR / "file_map.json"
+    if map_path.exists():
+        with open(map_path, "r", encoding="utf-8") as f:
+            file_map = json.load(f)
+    else:
+        file_map = {}
+    file_map[file_id] = original_name
+    with open(map_path, "w", encoding="utf-8") as f:
+        json.dump(file_map, file_map, ensure_ascii=False, indent=2)

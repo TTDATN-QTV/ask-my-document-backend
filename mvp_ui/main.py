@@ -1,5 +1,5 @@
 import streamlit as st
-from mvp_ui.utils.api import upload_pdf, ask_question
+from mvp_ui.utils.api import upload_pdf, ask_question, get_original_filename
 
 st.set_page_config(page_title="Ask My Document", layout="wide")
 st.title("Ask My Document")
@@ -47,11 +47,13 @@ if st.button("Ask") and query and file_ids_input:
         st.subheader("Context")
         context_chunks = result.get("context", [])
         for chunk in context_chunks:
-            st.markdown(f"**File:** {chunk['file_name']} | **Page:** {chunk['page_number'] + 1}")
+            # Get original file name from API
+            original_name = get_original_filename(chunk['file_id']) or chunk['file_name']
+            st.markdown(f"**File:** {original_name} | **Page:** {chunk['page_number'] + 1}")
             st.write(chunk['content'])
             pdf_url = f"http://localhost:8000/documents/pdf/{chunk['file_id']}"
             st.markdown(
-                f"[Open PDF at {chunk['file_name']} (page {chunk['page_number'] + 1})]({pdf_url})",
+                f"[Open PDF at {original_name} (page {chunk['page_number'] + 1})]({pdf_url})",
                 unsafe_allow_html=True
             )
     else:

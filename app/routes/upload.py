@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from app.services import document_service
 from app.config import UPLOAD_DIR
 import logging
+import json
 
 # Configure logging for this module
 logging.basicConfig(level=logging.INFO)  # ensures logs show in console
@@ -83,3 +84,16 @@ def get_pdf(file_id: str):
         raise HTTPException(status_code=404, detail="PDF not found")
 
     return FileResponse(str(pdf_path), media_type="application/pdf")
+
+
+@router.get("/filename/{file_id}")
+def get_filename(file_id: str):
+    map_path = UPLOAD_DIR / "file_map.json"
+    if not map_path.exists():
+        raise HTTPException(status_code=404, detail="File map not found")
+    with open(map_path, "r", encoding="utf-8") as f:
+        file_map = json.load(f)
+    filename = file_map.get(file_id)
+    if not filename:
+        raise HTTPException(status_code=404, detail="Original filename not found")
+    return {"file_id": file_id, "filename": filename}
