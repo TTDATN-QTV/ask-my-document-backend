@@ -5,8 +5,8 @@ from app.rag.rag_pipeline import generate_answer
 def handle_query(user_query: str, top_k: int = 2, file_ids: list = None) -> dict:
     """
     Process a user's query:
-    1. Retrieve relevant context from FAISS index
-    2. Pass context + query to LLM for generating answer
+    1. Retrieve top_k relevant context from EACH FAISS index (each file)
+    2. Pass all context + query to LLM for generating answer
     """
 
     if not user_query.strip():
@@ -16,13 +16,15 @@ def handle_query(user_query: str, top_k: int = 2, file_ids: list = None) -> dict
     if not file_ids or not isinstance(file_ids, list):
         raise ValueError("file_ids is required and must be a list.")
 
-    # Get context for all file_ids but limit to top_k
+    # Get top_k context for each file_id
     context_docs = []
     for file_id in file_ids:
         context_docs += get_relevant_context_for_file(user_query, file_id, top_k=top_k)
-    context_docs = context_docs[:top_k]
 
-    # Send the entire list of context documents to the LLM
+    # Optionally, limit total context_docs if needed (e.g. max 10)
+    # MAX_CONTEXT = 10
+    # context_docs = context_docs[:MAX_CONTEXT]
+
     answer = generate_answer(user_query, context_docs)
 
     return {

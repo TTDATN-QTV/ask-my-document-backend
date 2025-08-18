@@ -55,12 +55,18 @@ def build_faiss_index(docs: list[dict], index_path: Path, metadata_path: Path):
 INDEX_PATH = INDEX_DIR / "mock_index.faiss"
 META_PATH = INDEX_DIR / "mock_index.pkl"
 
-def get_relevant_context(query: str, top_k: int = 5):
+def get_relevant_context(query: str, top_k: int = 2):
     retriever = FaissRetriever(INDEX_PATH, META_PATH)
     return retriever.retrieve(query, top_k)
 
-def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 5):
+def get_relevant_context_for_file(query: str, file_id: str, top_k: int = 2, threshold: float = 0.7):
     index_path = INDEX_DIR / f"{file_id}.faiss"
     meta_path = INDEX_DIR / f"{file_id}.pkl"
     retriever = FaissRetriever(index_path, meta_path)
-    return retriever.retrieve(query, top_k)
+    query_emb = retriever.embed_model.encode([query])
+    distances, indices = retriever.index.search(query_emb, top_k)
+    results = []
+    for dist, idx in zip(distances[0], indices[0]):
+        if idx != -1 and dist < threshold:
+            results.append(retriever.metadata[idx])
+    return results
