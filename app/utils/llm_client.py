@@ -1,6 +1,7 @@
 import os
 import requests
 from langchain.llms import CTransformers
+from transformers import AutoTokenizer
 
 class HuggingFaceLLM:
     def __init__(self, model="deepset/roberta-base-squad2"):
@@ -44,7 +45,7 @@ class LocalLLM:
         )
 
     def generate(self, question: str, context_docs: list[str]) -> str:
-        context_text = "\n".join(context_docs)
+        context_text = truncate_context(context_docs, question, max_tokens=512)
         prompt = (
             "Use the following pieces of information to answer the user's question.\n"
             "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
@@ -54,6 +55,27 @@ class LocalLLM:
             "Helpful answer:"
         )
         return self.llm(prompt)
+
+tokenizer = AutoTokenizer.from_pretrained("hf-internal-testing/llama-tokenizer")
+
+def truncate_context(context_docs, question, max_tokens=512):
+    prompt_template = (
+        "Use the following pieces of information to answer the user's question.\n"
+        "If you don't know the answer, just say that you don't know, don't try to make up an answer.\n"
+        "Context: {context}\n"
+        "Question: {question}\n"
+        "Only return the helpful answer below and nothing else.\n"
+        "Helpful answer:"
+    )
+    context = ""
+    for doc in context_docs:
+        temp_context = context + doc + "\n"
+        prompt = prompt_template.format(context=temp_context, question=question)
+        num_tokens = len(tokenizer.encode(prompt))
+        if num_tokens > max_tokens:
+            break
+        context = temp_context
+    return context
 
 def get_default_llm():
     return LocalLLM()
