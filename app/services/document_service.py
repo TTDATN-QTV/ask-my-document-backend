@@ -69,11 +69,15 @@ def process_and_index_document(file_path: Path, file_id: str):
 
 def update_file_map(file_id: str, original_name: str):
     map_path = UPLOAD_DIR / "file_map.json"
+    file_map = {}
     if map_path.exists():
-        with open(map_path, "r", encoding="utf-8") as f:
-            file_map = json.load(f)
-    else:
-        file_map = {}
+        try:
+            with open(map_path, "r", encoding="utf-8") as f:
+                content = f.read().strip()
+                if content:
+                    file_map = json.loads(content)
+        except Exception:
+            file_map = {}
     file_map[file_id] = original_name
     with open(map_path, "w", encoding="utf-8") as f:
-        json.dump(file_map, file_map, ensure_ascii=False, indent=2)
+        json.dump(file_map, f, ensure_ascii=False, indent=2)
