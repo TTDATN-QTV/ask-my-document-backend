@@ -33,7 +33,7 @@ class HuggingFaceLLM:
             return str(result)
 
 class LocalLLM:
-    def __init__(self, model_path="models/llama-2-7b-chat.ggmlv3.q8_0.bin"):
+    def __init__(self, model_path="models/llama-2-7b-chat.ggmlv3.q4_1.bin"):
         self.llm = CTransformers(
             model=model_path,
             model_type="llama",
